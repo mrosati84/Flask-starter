@@ -28,5 +28,5 @@ class Allocation:
         print(f"Amount Occupied: {self.amount_occupied}")
 
     def toString(self):
-        return f"{self.name} {self.amount_free} | {self.amount_occupied}"
+        return f"{self.name} Amount free: {self.amount_free} | Amount occupied: {self.amount_occupied}"
 

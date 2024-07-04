@@ -7,4 +7,3 @@ __pycache__
 .vscode
 
 static/audio/*.mp3
-!audio/.gitkeep
