@@ -312,10 +312,13 @@ def check_availability(practice: str, from_date: str, to_date: str) -> list:
 
             for slot in plannings['data']['plannings'][str(employee_id)]:
                 total_amount = total_amount + slot['amount']
+            
+            amount_occupied = int(calculate_load(total_amount, from_date, to_date))
 
             free.append({
                 "name": get_employee_name_by_id(employee_id),
-                "amount": f'{calculate_load(total_amount, from_date, to_date)}%'
+                "amount_occupied": f'{amount_occupied}%',
+                "amount_free": f'{100 - amount_occupied}%',
             })
 
     return free
