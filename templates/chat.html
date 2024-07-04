@@ -17,6 +17,8 @@
         <audio controls id="audio" src="" type="audio/mpeg"></audio>
     </div>
 
+    <p id="text"></p>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
     <script>
@@ -73,9 +75,12 @@
                             console.log(data);
                             $('#loading').hide();
                             $('#audio').attr('src', data.mp3);
-                            setTimeout(1000, function() {
-                                document.getElementById('audio').play();
-                            });
+                            $('#text').html(data.txt.replace(/&/g, '&amp;')
+                                                    .replace(/</g, '&lt;')
+                                                    .replace(/>/g, '&gt;')
+                                                    .replace(/"/g, '&quot;')
+                                                    .replace(/'/g, '&#039;')
+                                                    .replace(/\n/g, '<br>'))
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
                             console.error('Error:', textStatus, errorThrown);
