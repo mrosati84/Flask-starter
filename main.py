@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from functions import check_availability, GPT_conversation
+from functions import check_availability, check_employee_availability, GPT_conversation
 load_dotenv()
 
 app = Flask(__name__)
@@ -13,15 +13,23 @@ def availability():
         practice = request.args.get('practice')
         from_date = request.args.get('from_date')
         to_date = request.args.get('to_date')
+        employee = request.args.get('employee')
 
         # Check if any parameter is missing
-        if not practice or not from_date or not to_date:
-            return jsonify({'error': 'Parameters practice, from_date, and to_date are mandatory.'}), 422
+        if not from_date or not to_date:
+            return jsonify({'error': 'Parameters from_date, and to_date are mandatory.'}), 422
 
-        # Call check_availability function with query parameters
-        availability_result = check_availability(practice, from_date, to_date)
+        if practice and employee:
+            return jsonify({'error': 'Cannot specify both practice and employee.'}), 422
 
-        return jsonify(availability_result)
+        if practice:
+            return jsonify(check_availability(practice, from_date, to_date))
+        
+        if employee:
+            return jsonify(check_employee_availability(employee, from_date, to_date))
+
+        # Fallback, neither practice or employee have been specified
+        return jsonify({'error': 'Must specify either practice or employee.'}), 422
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
