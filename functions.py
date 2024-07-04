@@ -2,6 +2,9 @@ import os
 import requests
 from datetime import datetime, timedelta
 from cachetools import TTLCache, cached
+from openai import OpenAI
+import json
+from entities.allocation import Allocation
 
 cache = TTLCache(maxsize=128, ttl=int(os.environ.get('CACHE_TTL')))
 
@@ -322,3 +325,99 @@ def check_availability(practice: str, from_date: str, to_date: str) -> list:
             })
 
     return free
+
+
+
+def GPT_conversation(prompt:str):
+    client = OpenAI()
+    current_year = datetime.now().year
+    prompt = prompt + " \n If no year is specified assume the year is %s?" % (current_year)
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "check_availability",
+                "description": "Get the employee availability for a specific practice and time interval",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "practice": {
+                            "type": "string",
+                            "enum": ["Technology", "Experience"],
+                            "description": "The practice name",
+
+                        },
+                        "from_date": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "The start date in 'YYYY-MM-DD' format"
+                        },
+                        "to_date": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "The start date in 'YYYY-MM-DD' format"
+                        },
+                    },
+                    "required": ["practice", "from_date", "to_date"],
+                },
+            },
+        }
+    ]
+
+    messages = [
+        {"role": "user", "content": prompt},
+        ]
+    
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=messages,
+        tools=tools,
+        tool_choice="auto",  # auto is default, but we'll be explicit
+    )
+
+    response_message = response.choices[0].message
+    tool_calls = response_message.tool_calls
+    # Step 2: check if the model wanted to call a function
+    if tool_calls:
+        # Step 3: call the function
+        # Note: the JSON response may not always be valid; be sure to handle errors
+        available_functions = {
+            "check_availability": check_availability,
+        }  # only one function in this example, but you can have multiple
+        messages.append(response_message)  # extend conversation with assistant's reply
+        # Step 4: send the info for each function call and function response to the model
+        for tool_call in tool_calls:
+            function_name = tool_call.function.name
+            function_to_call = available_functions[function_name]
+            function_args = json.loads(tool_call.function.arguments)
+            function_response = function_to_call(
+                practice=function_args.get("practice"),
+                from_date=function_args.get("from_date"),
+                to_date=function_args.get("to_date"),
+            )
+
+            # for each item in the response, create a new Allocation with it and add its toString() to the list
+
+            function_response_to_str = []
+            for item in function_response:
+                function_response_to_str.append(Allocation(item.get("name"), item.get("amount_free"), item.get("amount_occupied")).toString())  
+
+            function_response_to_str = "\n".join( function_response_to_str)
+            #print("FR: ",function_response_to_str, function_args.get("practice"), function_args.get("from_date"), function_args.get("to_date"))
+
+            messages.append(
+                {
+                    "tool_call_id": tool_call.id,
+                    "role": "tool",
+                    "name": function_name,
+                    "content": function_response_to_str,
+                }
+            )  # extend conversation with function response
+        second_response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+        )  # get a new response from the model where it can see the function response
+
+        #print (second_response.choices[0].message.content)
+        return second_response.choices[0].message.content
+

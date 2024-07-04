@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from functions import check_availability
+from functions import check_availability, GPT_conversation
 load_dotenv()
 
 app = Flask(__name__)
@@ -22,6 +22,19 @@ def availability():
         availability_result = check_availability(practice, from_date, to_date)
 
         return jsonify(availability_result)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/testgpt')
+def testgpt():
+    try:
+        prompt = request.args.get('prompt', default="chi c'è della practice technology libero dal 4 al 10 luglio ?", type=str)
+
+
+        res = GPT_conversation(prompt)
+        return jsonify(res)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
