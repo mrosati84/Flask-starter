@@ -329,6 +329,8 @@ def check_availability(practice: str, from_date: str, to_date: str) -> list:
 
 
 def GPT_conversation(prompt:str):
+
+    PRACTICES = ["Technology", "Experience", "strategy","project management","creative","copywriter" ]
     client = OpenAI()
     current_year = datetime.now().year
     prompt = prompt + " \n If no year is specified assume the year is %s?" % (current_year)
@@ -343,7 +345,7 @@ def GPT_conversation(prompt:str):
                     "properties": {
                         "practice": {
                             "type": "string",
-                            "enum": ["Technology", "Experience"],
+                            "enum": PRACTICES,
                             "description": "The practice name",
 
                         },
