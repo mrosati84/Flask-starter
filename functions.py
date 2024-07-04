@@ -335,6 +335,10 @@ def check_employee_availability(employee_name, from_date, to_date):
         }
     """
     employee_id = get_employee_by_name(employee_name)
+
+    if employee_id < 0:
+        return {'error': 'Employee not found.'}
+
     plannings = get_plannings(from_date, to_date)
 
     # la risorsa e' libera al 100% perche' non appare nelle allocazioni
@@ -363,7 +367,7 @@ def check_employee_availability(employee_name, from_date, to_date):
 def GPT_conversation(prompt: str):
     PRACTICES = ["Technology", "Experience", "strategy",
                  "project management", "creative", "copywriter"]
-    
+
     client = OpenAI()
     current_year = datetime.now().year
     prompt = prompt + \
@@ -413,7 +417,7 @@ def GPT_conversation(prompt: str):
 
     response_message = response.choices[0].message
     tool_calls = response_message.tool_calls
-    
+
     # Step 2: check if the model wanted to call a function
     if tool_calls:
         # Step 3: call the function
@@ -421,10 +425,10 @@ def GPT_conversation(prompt: str):
         available_functions = {
             "check_availability": check_availability,
         }  # only one function in this example, but you can have multiple
-        
+
         # extend conversation with assistant's reply
         messages.append(response_message)
-        
+
         # Step 4: send the info for each function call and function response to the model
         for tool_call in tool_calls:
             function_name = tool_call.function.name
@@ -439,7 +443,7 @@ def GPT_conversation(prompt: str):
             # for each item in the response, create a new Allocation with it and add its toString() to the list
 
             function_response_to_str = []
-            
+
             for item in function_response:
                 function_response_to_str.append(Allocation(item.get("name"), item.get(
                     "amount_free"), item.get("amount_occupied")).toString())
@@ -455,7 +459,7 @@ def GPT_conversation(prompt: str):
                     "content": function_response_to_str,
                 }
             )  # extend conversation with function response
-        
+
         second_response = client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
