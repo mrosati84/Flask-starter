@@ -344,11 +344,11 @@ def check_employee_availability(employee_name, from_date, to_date):
 
     # la risorsa e' libera al 100% perche' non appare nelle allocazioni
     if str(employee_id) not in plannings['data']['plannings']:
-        return {
+        return [{
             "name": employee_name,
             "amount_occupied": "0%",
             "amount_free": "100%"
-        }
+        }]
 
     # la risorsa non e' libera al 100% perche' appare nelle allocazioni
     total_amount = 0
