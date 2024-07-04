@@ -4,6 +4,8 @@ FROM python:3.11-bookworm
 
 RUN mkdir /app
 
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
 COPY --exclude=venv --exclude=*.pyc --exclude=*.pyo --exclude=.env* --exclude=.git* * /app
 
 RUN cd /app && pip install -r requirements.txt
