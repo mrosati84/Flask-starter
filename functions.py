@@ -365,7 +365,7 @@ def check_employee_availability(employee_name, from_date, to_date):
     }]
 
 
-def GPT_conversation(prompt: str):
+def GPT_conversation(prompt: str) -> str:
     # PRACTICES = ["Technology", "Experience", "strategy", "project management", "creative", "copywriter"]
     
     client = OpenAI()

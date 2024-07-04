@@ -5,3 +5,6 @@ venv
 __pycache__
 .env
 .vscode
+
+audio/*.mp3
+!audio/.gitkeep

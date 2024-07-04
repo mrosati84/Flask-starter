@@ -2,6 +2,9 @@ from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from functions import check_availability, check_employee_availability, GPT_conversation
 load_dotenv()
+from openai import OpenAI
+from pathlib import Path
+import uuid
 
 app = Flask(__name__)
 
@@ -37,11 +40,31 @@ def availability():
 
 @app.route('/testgpt')
 def testgpt():
+    client = OpenAI()
+
     try:
         prompt = request.args.get('prompt', default="chi c'è della practice technology libero dal 4 al 10 luglio ?", type=str)
 
         res = GPT_conversation(prompt)
-        return jsonify(res)
+
+        with client.audio.speech.with_streaming_response.create(
+            model="tts-1",
+            voice="nova",
+            input=res,
+        )  as response:
+            print(response)
+            # create a unique uuid using uuid library
+            id = str(uuid.uuid4())
+
+
+            # create mp3 dir if it doesn't exist
+            Path("audio").mkdir(parents=True, exist_ok=True)
+
+            speech_file_path = f"audio/{id}.mp3"
+            response.stream_to_file(speech_file_path)
+        
+
+        return jsonify({'txt': res, 'mp3': speech_file_path})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
