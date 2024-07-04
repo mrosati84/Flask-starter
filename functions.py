@@ -5,6 +5,7 @@ from cachetools import TTLCache, cached
 from openai import OpenAI
 import json
 from entities.allocation import Allocation
+from openai_functions import openai_func_check_availability, openai_func_check_employee_availability
 
 cache = TTLCache(maxsize=128, ttl=int(os.environ.get('CACHE_TTL')))
 
@@ -357,51 +358,26 @@ def check_employee_availability(employee_name, from_date, to_date):
 
     amount_occupied = int(calculate_load(total_amount, from_date, to_date))
 
-    return {
+    return [{
         "name": employee_name,
         "amount_occupied": f'{amount_occupied}%',
         "amount_free": f'{100 - amount_occupied}%',
-    }
+    }]
 
 
 def GPT_conversation(prompt: str):
-    PRACTICES = ["Technology", "Experience", "strategy",
-                 "project management", "creative", "copywriter"]
-
+    # PRACTICES = ["Technology", "Experience", "strategy", "project management", "creative", "copywriter"]
+    
     client = OpenAI()
     current_year = datetime.now().year
+    current_date = datetime.now().strftime("%Y-%m-%d")
     prompt = prompt + \
-        " \n If no year is specified assume the year is %s?" % (current_year)
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "check_availability",
-                "description": "Get the employee availability for a specific practice and time interval",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "practice": {
-                            "type": "string",
-                            "enum": PRACTICES,
-                            "description": "The practice name",
+        " \n If no year is specified assume the year is %s \n Today is %s \n Answer by providing the answer in a natural language without adding any questions or further details" % (current_year, current_date)
+    
 
-                        },
-                        "from_date": {
-                            "type": "string",
-                            "format": "date",
-                            "description": "The start date in 'YYYY-MM-DD' format"
-                        },
-                        "to_date": {
-                            "type": "string",
-                            "format": "date",
-                            "description": "The start date in 'YYYY-MM-DD' format"
-                        },
-                    },
-                    "required": ["practice", "from_date", "to_date"],
-                },
-            },
-        }
+    tools = [
+        openai_func_check_availability,
+        openai_func_check_employee_availability        
     ]
 
     messages = [
@@ -422,10 +398,14 @@ def GPT_conversation(prompt: str):
     if tool_calls:
         # Step 3: call the function
         # Note: the JSON response may not always be valid; be sure to handle errors
-        available_functions = {
-            "check_availability": check_availability,
-        }  # only one function in this example, but you can have multiple
 
+        # we filter tools to fetch each item function.name parameter and create a dictionary with the function name as key and value
+        
+        available_functions = {
+            "check_availability":check_availability,
+            "check_employee_availability":check_employee_availability,
+        }
+        
         # extend conversation with assistant's reply
         messages.append(response_message)
 
@@ -434,13 +414,21 @@ def GPT_conversation(prompt: str):
             function_name = tool_call.function.name
             function_to_call = available_functions[function_name]
             function_args = json.loads(tool_call.function.arguments)
-            function_response = function_to_call(
-                practice=function_args.get("practice"),
-                from_date=function_args.get("from_date"),
-                to_date=function_args.get("to_date"),
-            )
 
-            # for each item in the response, create a new Allocation with it and add its toString() to the list
+            if function_name == "check_availability":
+                function_response = function_to_call(
+                    practice=function_args.get("practice"),
+                    from_date=function_args.get("from_date"),
+                    to_date=function_args.get("to_date"),
+                )
+            elif function_name == "check_employee_availability":
+                function_response = function_to_call(
+                    employee_name=function_args.get("employee_name"),
+                    from_date=function_args.get("from_date"),
+                    to_date=function_args.get("to_date"),
+                )
+
+                # for each item in the response, create a new Allocation with it and add its toString() to the list
 
             function_response_to_str = []
 
@@ -458,7 +446,7 @@ def GPT_conversation(prompt: str):
                     "name": function_name,
                     "content": function_response_to_str,
                 }
-            )  # extend conversation with function response
+            )
 
         second_response = client.chat.completions.create(
             model="gpt-4o",

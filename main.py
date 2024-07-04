@@ -40,7 +40,6 @@ def testgpt():
     try:
         prompt = request.args.get('prompt', default="chi c'è della practice technology libero dal 4 al 10 luglio ?", type=str)
 
-
         res = GPT_conversation(prompt)
         return jsonify(res)
 
