@@ -1,4 +1,5 @@
-PRACTICES = ["Technology", "Experience", "strategy", "project management", "creative", "copywriter"]
+PRACTICES = ["Technology", "Experience", "strategy",
+             "project management", "creative", "copywriter"]
 
 openai_func_check_availability = {
     "type": "function",

@@ -4,6 +4,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template
 from functions import check_availability, check_employee_availability, GPT_conversation
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -13,9 +14,11 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+
 @app.route('/chat')
 def chat():
     return render_template('chat.html')
+
 
 @app.route('/availability')
 def availability():

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from cachetools import TTLCache, cached
 from openai import OpenAI
 import json
-from entities.allocation import Allocation
+from entities import Allocation
 from openai_functions import openai_func_check_availability, openai_func_check_employee_availability
 
 cache = TTLCache(maxsize=128, ttl=int(os.environ.get('CACHE_TTL')))
