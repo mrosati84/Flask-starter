@@ -1,18 +1,95 @@
+.lato-thin {
+  font-family: "Lato", sans-serif;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.lato-light {
+  font-family: "Lato", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.lato-regular {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.lato-bold {
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.lato-black {
+  font-family: "Lato", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.lato-thin-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 100;
+  font-style: italic;
+}
+
+.lato-light-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.lato-regular-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.lato-bold-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.lato-black-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.uitod-logo {
+  vertical-align: middle;
+  border-radius: 1em;
+}
+
 body {
   background-color: #eee;
+  padding: 0 1em 0 1em;
 }
 
 #chat {
+  padding: 1em 0;
+  border-radius: 2em;
+  border: 1px solid;
   display: block;
   text-align: center;
-  background-color: brown;
-  padding: 20px 0 20px 0;
-  border: 2px solid;
+}
+#chat:link,
+#chat:visited,
+#chat:hover,
+#chat:active {
+  color: #000;
+  text-decoration: none;
 }
 
 #record {
   display: block;
   text-align: center;
+}
+
+.recording {
+  filter: drop-shadow(2px 2px 3px red);
 }
 
 #loading {
