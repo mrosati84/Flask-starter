@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatod &trade;</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <h1 align="center">Chathod &trade;</h1>
+    <p align="center">
+        Powered by <img align="middle" src="{{ url_for('static', filename='img/uitod.png') }}" alt="" width="100"><br><small><i>(Finché non scoprono che stiamo usando le API in modo... creativo)</i></small>
+    </p>
+    <hr>
+    <p>L'applicazione che ti permette di chattare con Wethod &trade;!</p>
+    <p>Chatod &trade; (si pronuncia <i>saˈtɔd</i>) ti permette di verificare la disponibilità <strike>delle risorse</strike> dei tuoi colleghi in modo AI-driven, nosbatti-driven, ma soprattutto senza stressare Sinigaglia.</p>
+    <p>Il potente algoritmo quantistico di Chatod &trade; può verificare la disponibilità di un'intera practice (<i>wow!</i>) o di singole persone.</p>
+        
+    <p>Ti basterà fargli domande tipo &quot;<i>Ho bisogno di un designer dal 12 al 15 febbraio</i>&quot;, oppure &quot;<i>Verifica la disponibilità di Antonio Ruccia la seconda settimana di Novembre</i>&quot; (tanto è sempre scarico).</p>
+
+    <a id="chat" href="{{ url_for('chat') }}">Ciatta ora!</a>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</body>
+</html>

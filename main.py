@@ -1,13 +1,21 @@
+import uuid
+from pathlib import Path
+from openai import OpenAI
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from functions import check_availability, check_employee_availability, GPT_conversation
 load_dotenv()
-from openai import OpenAI
-from pathlib import Path
-import uuid
 
 app = Flask(__name__)
 
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/chat')
+def chat():
+    return render_template('chat.html')
 
 @app.route('/availability')
 def availability():
@@ -27,7 +35,7 @@ def availability():
 
         if practice:
             return jsonify(check_availability(practice, from_date, to_date))
-        
+
         if employee:
             return jsonify(check_employee_availability(employee, from_date, to_date))
 
@@ -36,14 +44,15 @@ def availability():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/testgpt')
 def testgpt():
     client = OpenAI()
 
     try:
-        prompt = request.args.get('prompt', default="chi c'è della practice technology libero dal 4 al 10 luglio ?", type=str)
+        prompt = request.args.get(
+            'prompt', default="chi c'è della practice technology libero dal 4 al 10 luglio ?", type=str)
 
         res = GPT_conversation(prompt)
 
@@ -51,24 +60,22 @@ def testgpt():
             model="tts-1",
             voice="nova",
             input=res,
-        )  as response:
+        ) as response:
             print(response)
             # create a unique uuid using uuid library
             id = str(uuid.uuid4())
 
-
             # create mp3 dir if it doesn't exist
             Path("audio").mkdir(parents=True, exist_ok=True)
 
-            speech_file_path = f"audio/{id}.mp3"
+            speech_file_path = f"static/audio/{id}.mp3"
             response.stream_to_file(speech_file_path)
-        
 
-        return jsonify({'txt': res, 'mp3': speech_file_path})
+        return jsonify({'txt': res, 'mp3': ''.join(['/', speech_file_path])})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0")

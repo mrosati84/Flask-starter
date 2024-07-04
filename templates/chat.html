@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatod &trade; - Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <a id="record" href="#">
+        <img src="{{ url_for('static', filename='img/rec.png') }}" alt="" width="200">
+    </a>
+
+    <h2 align="center" id="loading">LOADING...</h2>
+
+    <div align="center">
+        <audio controls id="audio" src="" type="audio/mpeg"></audio>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var final_transcript = '';
+            
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('ATTENZIONE!!! Il tuo browser fa schifo e non ha il riconoscimento vocale!!!');
+            }
+            
+            $('#record').on('click', function(ev) {
+                ev.preventDefault();
+                final_transcript = '';
+                
+                var recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+
+                recognition.onstart = function() {
+                    
+                }
+                
+                recognition.onresult = function(event) {
+                    var interim_transcript = '';
+
+                    for (var i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            final_transcript += event.results[i][0].transcript;
+                        } else {
+                            interim_transcript += event.results[i][0].transcript;
+                        }
+                    }
+                    
+                    final_transcript = final_transcript;
+                }
+                
+                recognition.onerror = function(event) {
+                    console.log(event);
+                }
+                
+                recognition.onend = function() {
+                    console.log(final_transcript);
+
+                    $('#loading').show();
+
+                    $.ajax({
+                        url: '/testgpt',
+                        method: 'GET',
+                        data: {
+                            prompt: final_transcript
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            console.log(data);
+                            $('#loading').hide();
+                            $('#audio').attr('src', data.mp3);
+                            setTimeout(1000, function() {
+                                document.getElementById('audio').play();
+                            });
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.error('Error:', textStatus, errorThrown);
+                            $('#loading').hide();
+                        }
+                    })
+                }
+
+                recognition.start();
+            });
+        });
+    </script>
+</body>
+</html>
