@@ -371,9 +371,12 @@ def GPT_conversation(prompt: str) -> str:
     client = OpenAI()
     current_year = datetime.now().year
     current_date = datetime.now().strftime("%Y-%m-%d")
-    prompt = prompt + \
-        " \n If no year is specified assume the year is %s \n Today is %s \n Answer by providing the answer in a natural language without adding any questions or further details" % (current_year, current_date)
+    #prompt = prompt + \
+     #   " \n If no year is specified assume the year is %s \n Today is %s \n Answer by providing the answer in a natural language without adding any questions or further details" % (current_year, current_date)
     
+    #italian prompt
+    prompt = prompt + \
+        " \n Se non viene specificato l'anno, assumi che l'anno sia %s. \n La data di oggi è: %s. \n Rispondi fornendo la risposta in linguaggio naturale senza aggiungere domande o ulteriori dettagli.\n Rispondi sempre in italiano." % (current_year, current_date)
 
     tools = [
         openai_func_check_availability,
