@@ -11,6 +11,7 @@ COPY entities.py /app
 COPY functions.py /app
 COPY main.py /app
 COPY openai_functions.py /app
+COPY audio.py /app
 COPY requirements.txt /app
 
 ENV CACHE_TTL=10
