@@ -1,10 +1,21 @@
-# syntax=docker/dockerfile:1.7-labs
-
 FROM python:3.11-bookworm
 
 RUN mkdir /app
+RUN mkdir /app/static
+RUN mkdir /app/templates
+RUN mkdir /app/audio
 
-COPY --exclude=venv --exclude=*.pyc --exclude=*.pyo --exclude=.env* --exclude=.git* * /app
+COPY static/ /app/static
+COPY templates/ /app/templates
+COPY entities.py /app
+COPY functions.py /app
+COPY main.py /app
+COPY openai_functions.py /app
+COPY requirements.txt /app
+
+ENV CACHE_TTL=10
+ENV HOST=0.0.0.0
+ENV PORT=8000
 
 RUN cd /app && pip install -r requirements.txt
 
