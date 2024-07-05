@@ -432,6 +432,10 @@ def GPT_conversation(prompt: str) -> str:
 
             function_response_to_str = []
 
+            # if function_response contain an error property it's an error, return the error message
+            if "error" in function_response:
+                return function_response.get("error")
+
             for item in function_response:
                 function_response_to_str.append(Allocation(item.get("name"), item.get(
                     "amount_free"), item.get("amount_occupied")).toString())
