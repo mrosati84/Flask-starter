@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template
 from functions import check_availability, check_employee_availability, GPT_conversation
 
+from audio import elevenlalbs
 load_dotenv()
 
 app = Flask(__name__)
@@ -59,20 +60,22 @@ def testgpt():
 
         res = GPT_conversation(prompt)
 
-        with client.audio.speech.with_streaming_response.create(
-            model="tts-1",
-            voice="nova",
-            input=res,
-        ) as response:
-            print(response)
-            # create a unique uuid using uuid library
-            id = str(uuid.uuid4())
+        speech_file_path = elevenlalbs(res, 'static/audio')
+        
+        # with client.audio.speech.with_streaming_response.create(
+        #     model="tts-1",
+        #     voice="nova",
+        #     input=res,
+        # ) as response:
+        #     print(response)
+        #     # create a unique uuid using uuid library
+        #     id = str(uuid.uuid4())
 
-            # create mp3 dir if it doesn't exist
-            Path("audio").mkdir(parents=True, exist_ok=True)
+        #     # create mp3 dir if it doesn't exist
+        #     Path("audio").mkdir(parents=True, exist_ok=True)
 
-            speech_file_path = f"static/audio/{id}.mp3"
-            response.stream_to_file(speech_file_path)
+        #     speech_file_path = f"static/audio/{id}.mp3"
+        #     response.stream_to_file(speech_file_path)
 
         return jsonify({'txt': res, 'mp3': ''.join(['/', speech_file_path])})
 
