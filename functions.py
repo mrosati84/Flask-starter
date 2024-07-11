@@ -5,10 +5,12 @@ from cachetools import TTLCache, cached
 from openai import OpenAI
 import json
 from entities import Allocation
-from openai_functions import openai_func_check_availability, openai_func_check_employee_availability
+from openai_functions import openai_func_check_availability, openai_func_check_employee_availability, openai_func_check_availability_by_job_title
 
 cache = TTLCache(maxsize=128, ttl=int(os.environ.get('CACHE_TTL')))
 
+JOB_TITLES = ['account director', 'account executive', 'account manager', 'art direction intern', 'art director', 'associate art director', 'associate content marketing manager', 'associate creative director', 'associate creative technologist', 'associate data analyst', 'associate design director', 'associate designer', 'associate experience design director', 'associate experience designer', 'associate program director', 'associate project director', 'associate project manager', 'associate strategy director', 'back-end developer', 'client partner', 'content marketing director', 'content marketing intern', 'content marketing manager', 'copywriter', 'copywriter intern', 'creative director c', 'data & research director', 'designer', 'director of client services', 'director of project management', 'director of strategy', 'director of technology', 'experience & design director', 'experience design intern', 'experience designer', 'experience writer', 'front-end developer', 'front-end leader', 'group account director', 'group creative director', 'junior frontend developer', 'operation lead', 'outsourcing manager', 'programme director', 'project manager', 'senior account director a', 'senior analyst', 'senior art director', 'senior consumer researcher', 'senior content marketing manager', 'senior copywriter', 'senior designer', 'senior experience designer', 'senior experience writer', 'senior project manager', 'senior strategist', 'social media strategist', 'strategist', 'strategy lead', 'technical artist', 'technical leader']
+PRACTICES = ['client services', 'content marketing', 'creative', 'data and research', 'delivery', 'design', 'experience', 'project management', 'strategy', 'technology']
 
 def get_headers() -> dict:
     """
@@ -164,6 +166,31 @@ def get_employees_from_practice(practice: str) -> list:
 
     return found
 
+def get_employees_by_job_title(job_title: str) -> list:
+    """
+    Fetches a list of employee IDs associated with a specific job title from a cached dictionary of employees.
+
+    This function retrieves a cached dictionary of employees using the 'get_employees()' function. 
+    It then filters through the employees based on a provided 'job_title' string, which is compared 
+    against the 'job_title' attribute in each employee's 'tags' list (case-insensitive comparison). 
+    If a match is found, the employee's ID is appended to the 'found' list.
+
+    Args:
+        job_title (str): The job title to filter employees by.
+
+    Returns:
+        list: A list of employee IDs associated with the specified job title.
+    """
+    employees = get_employees()
+    job_title = job_title.lower()
+    found = []
+
+    for employee in employees['data']:
+        for tag in employee['tags']:
+            if tag['name'].lower() == job_title:
+                found.append(employee['id'])
+
+    return found
 
 @cached(cache)
 def get_employee_by_name(name: str) -> int:
@@ -380,7 +407,8 @@ def GPT_conversation(prompt: str) -> str:
 
     tools = [
         openai_func_check_availability,
-        openai_func_check_employee_availability        
+        openai_func_check_employee_availability,
+        openai_func_check_availability_by_job_title      
     ]
 
     messages = [
@@ -407,6 +435,7 @@ def GPT_conversation(prompt: str) -> str:
         available_functions = {
             "check_availability":check_availability,
             "check_employee_availability":check_employee_availability,
+            "check_employee_availability_by_jobtitle":check_employee_availability_by_jobtitle,
         }
         
         # extend conversation with assistant's reply
@@ -427,6 +456,12 @@ def GPT_conversation(prompt: str) -> str:
             elif function_name == "check_employee_availability":
                 function_response = function_to_call(
                     employee_name=function_args.get("employee_name"),
+                    from_date=function_args.get("from_date"),
+                    to_date=function_args.get("to_date"),
+                )
+            elif function_name == "check_employee_availability_by_jobtitle":
+                function_response = function_to_call(
+                    job_title=function_args.get("job_title"),
                     from_date=function_args.get("from_date"),
                     to_date=function_args.get("to_date"),
                 )
@@ -462,3 +497,66 @@ def GPT_conversation(prompt: str) -> str:
 
         # print (second_response.choices[0].message.content)
         return second_response.choices[0].message.content
+
+
+def check_employee_availability_by_jobtitle(job_title: str, from_date, to_date):
+    """
+    Check the availability of an employee within a specified date range.
+
+    Args:
+        job_title (str): The name of the job title to check.
+        from_date (str): The start date of the period to check, in YYYY-MM-DD format.
+        to_date (str): The end date of the period to check, in YYYY-MM-DD format.
+
+    Returns:
+        dict: A dictionary containing:
+            - "name" (str): The name of the employee.
+            - "amount_occupied" (str): The percentage of time the employee is occupied.
+            - "amount_free" (str): The percentage of time the employee is free.
+
+    Raises:
+        ValueError: If the employee_name is not found.
+
+    Example:
+        >>> check_employee_availability_by_jobtitle("John Doe", "2023-07-01", "2023-07-31")
+        {
+            "name": "John Doe",
+            "amount_occupied": "40%",
+            "amount_free": "60%"
+        }
+    """
+    job_title = job_title.lower()
+    if job_title not in JOB_TITLES:
+        return {'error': 'Job title not found.'}
+
+    employees = get_employees_by_job_title(job_title)
+    plannings = get_plannings(from_date, to_date)
+
+    availabilities = []
+
+    for employee_id in employees:
+        if str(employee_id) not in plannings['data']['plannings']:
+            # l'id non appare, quindi significa che non esiste alcuna allocazione.
+            # nessuna allocazione significa che la risorsa e' al 100% libera.
+            availabilities.append({
+                "name": get_employee_name_by_id(employee_id),
+                "amount": f'{calculate_load(0, from_date, to_date)}%'
+            })
+        else:
+            # la risorsa non e' libera al 100% perche' appare nelle allocazioni
+            total_amount = 0
+
+            for slot in plannings['data']['plannings'][str(employee_id)]:
+                total_amount = total_amount + slot['amount']
+
+            amount_occupied = int(calculate_load(
+                total_amount, from_date, to_date))
+
+            availabilities.append({
+                "name": get_employee_name_by_id(employee_id),
+                "amount_occupied": f'{amount_occupied}%',
+                "amount_free": f'{100 - amount_occupied}%',
+            })
+
+    return availabilities
+
