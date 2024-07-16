@@ -10,7 +10,7 @@ def elevenlalbs(text:str, folder_path:str) -> str:
 
     speech_file_path = f"{folder_path}/{id}.mp3"
 
-    VOICE_ID = os.environ.get('ELEVENLABS_KEY',"gPWeWJBcOrH90ldfr24o" )  
+    VOICE_ID = os.environ.get('ELEVENLABS_VOICE_ID') or "gPWeWJBcOrH90ldfr24o"
     MODEL = "eleven_multilingual_v2"
 
     CHUNK_SIZE = 1024
